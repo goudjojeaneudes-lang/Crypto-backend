@@ -220,11 +220,28 @@ app.post('/api/deposit/address', async (req, res) => {
         v1: process.env.TATUM_API_KEY
       }
     });
+app.post('/api/deposit/address', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: "L'identifiant utilisateur (userId) est requis." });
+    }
 
-    const wallet = await tatum.wallet.generateWallet(CryptoCurrency.TRON);
+    const network = process.env.TATUM_NETWORK || 'tron-nile';
+    const response = await fetch(`https://api.tatum.io/v3/${network}/wallet`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': process.env.TATUM_API_KEY
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Erreur lors de la communication avec l'API Tatum");
+    }
+
+    const wallet = await response.json();
     const depositAddress = wallet.address || wallet.xpub;
 
-    // Mise à jour de l'utilisateur existant dans MongoDB
     let user = await User.findOne({ userId });
     if (!user) {
       user = new User({ userId, depositAddress });
@@ -239,7 +256,7 @@ app.post('/api/deposit/address', async (req, res) => {
       data: {
         userId: user.userId,
         depositAddress: user.depositAddress,
-        network: process.env.TATUM_NETWORK
+        network: network
       }
     });
 
@@ -248,6 +265,8 @@ app.post('/api/deposit/address', async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
+   
 
 
 app.listen(PORT, () => console.log(`🚀 Serveur backend en ligne sur le port ${PORT}`));
