@@ -204,6 +204,50 @@ app.post('/api/transaction', authMiddleware, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Erreur lors de la transaction.' });
   }
+});// --- NOUVELLE ROUTE : Génération d'adresse de dépôt Tatum ---
+const { TatumSdk, Network, CryptoCurrency } = require('@tatumio/tatum');
+
+app.post('/api/deposit/address', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: "L'identifiant utilisateur (userId) est requis." });
+    }
+
+    const tatum = await TatumSdk.init({
+      network: process.env.TATUM_NETWORK || Network.TRON_NILE,
+      apiKey: {
+        v1: process.env.TATUM_API_KEY
+      }
+    });
+
+    const wallet = await tatum.wallet.generateWallet(CryptoCurrency.TRON);
+    const depositAddress = wallet.address || wallet.xpub;
+
+    // Mise à jour de l'utilisateur existant dans MongoDB
+    let user = await User.findOne({ userId });
+    if (!user) {
+      user = new User({ userId, depositAddress });
+    } else {
+      user.depositAddress = depositAddress;
+    }
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Adresse de dépôt générée avec succès",
+      data: {
+        userId: user.userId,
+        depositAddress: user.depositAddress,
+        network: process.env.TATUM_NETWORK
+      }
+    });
+
+  } catch (error) {
+    console.error("Erreur Tatum :", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
+
 
 app.listen(PORT, () => console.log(`🚀 Serveur backend en ligne sur le port ${PORT}`));
