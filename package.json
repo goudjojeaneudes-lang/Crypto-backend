@@ -1,0 +1,6 @@
+git init
+git add .
+git commit -m "Initial commit - Backend Express pour Render"
+git branch -M main
+git remote add origin https://github.com/votre-nom-utilisateur/crypto-backend.git
+git push -u origin main
