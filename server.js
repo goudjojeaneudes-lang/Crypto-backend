@@ -1,4 +1,4 @@
-require('dotenv').config();
+Turequire('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -260,13 +260,11 @@ app.post('/api/deposit/address', async (req, res) => {
       }
     });
 
-  } catch (error) {
-    console.error("Erreur Tatum :", error);
-    return res.status(500).json({ error: error.message });
-  }
+} catch (error) {
+  console.error("Erreur Tatum :", error);
+  return res.status(500).json({ error: error.message });
+}
 });
 
-   
+app.listen(PORT, () => console.log(`🚀 Serveur en ligne sur le port ${PORT}`));
 
-
-app.listen(PORT, () => console.log(`🚀 Serveur backend en ligne sur le port ${PORT}`));
